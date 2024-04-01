@@ -123,6 +123,24 @@ async def lifespan(scope, receive, send):
         scope['state']['global'] = 'test'
         await send({'type': 'lifespan.startup.complete'})
 
+# This function is used to test the case where the subprotocol is set to None, copied from ws_echo
+async def ws_error_subprotocol_none(scope, receive, send):
+    # Simulate django channels sending a message with subprotocol set to none
+    await send({'type': 'websocket.accept', 'subprotocol': None})
+
+    while True:
+        msg = await receive()
+        if msg['type'] == 'websocket.connect':
+            continue
+        if msg['type'] == 'websocket.disconnect':
+            break
+        rv = {'type': 'websocket.send', 'bytes': None, 'text': None}
+        key = 'text' if 'text' in msg else 'bytes'
+        rv[key] = msg[key]
+        await send(rv)
+
+    await send({'type': 'websocket.close'})
+
 
 def app(scope, receive, send):
     if scope['type'] == 'lifespan':
@@ -137,4 +155,5 @@ def app(scope, receive, send):
         '/ws_push': ws_push,
         '/err_app': err_app,
         '/err_proto': err_proto,
+        '/ws_error_subprotocol_none': ws_error_subprotocol_none,
     }[scope['path']](scope, receive, send)

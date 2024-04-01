@@ -112,4 +112,5 @@ def app(scope, protocol):
         '/ws_echo': ws_echo,
         '/ws_push': ws_push,
         '/err_app': err_app,
+        '/ws_error_subprotocol_none':ws_echo # I don't know if the error occurs in the rsgi, but the tests require this to be here
     }[scope.path](scope, protocol)

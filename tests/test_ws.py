@@ -69,3 +69,18 @@ async def test_rsgi_scope(rsgi_server, threading_mode):
     assert data['query_string'] == 'test=true'
     assert data['headers']['host'] == f'localhost:{port}'
     assert not data['authority']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('server', ['asgi', 'rsgi'], indirect=True)
+@pytest.mark.parametrize('threading_mode', ['runtime', 'workers'])
+async def test_subprotocol_none(server, threading_mode):
+    async with server(threading_mode) as port:
+        async with websockets.connect(f'ws://localhost:{port}/ws_error_subprotocol_none') as ws:
+            await ws.send('foo')
+            res_text = await ws.recv()
+            await ws.send(b'foo')
+            res_bytes = await ws.recv()
+
+    assert res_text == 'foo'
+    assert res_bytes == b'foo'
